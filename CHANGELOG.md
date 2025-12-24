@@ -71,6 +71,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- `mergeForms()` function to merge two or more form definitions
+  - Merges forms with different field IDs
+  - Allows identical fields (same ID and content)
+  - Throws `DuplicateFieldError` for same ID with different content
+  - Combines dependencies, functions, and metadata
+  - Supports custom formId, title, description, and version for merged form
+- Comprehensive tests for form merging functionality
+- Example demonstrating form merging patterns ([merge-forms.ts](examples/merge-forms.ts))
+- Documentation for merge functionality in README and QUICKSTART
+
 ### Planned
 - Additional validation helpers
 - Form composition utilities

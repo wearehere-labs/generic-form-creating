@@ -112,6 +112,37 @@ form = updateField(form, 'username', {
 });
 ```
 
+#### `mergeForms(forms, options?)`
+
+Merges two or more form definitions into one. Only succeeds if all fields have different IDs, or if fields with the same ID are identical.
+
+```typescript
+const form1 = createForm('form1');
+form1 = addField(form1, createTextField('name', 'Name', {}));
+
+const form2 = createForm('form2');
+form2 = addField(form2, createTextField('email', 'Email', {}));
+
+// Merge forms
+const merged = mergeForms([form1, form2], {
+  formId: 'merged-form',
+  title: 'Combined Form',
+});
+// Result: form with both 'name' and 'email' fields
+
+// Error case: same ID, different content
+const form3 = createForm('form3');
+form3 = addField(form3, createTextField('name', 'Name', { minLength: 5 }));
+
+mergeForms([form1, form3]); // ❌ Throws DuplicateFieldError
+```
+
+**Merge Rules:**
+- ✅ Fields with different IDs are combined
+- ✅ Fields with same ID and identical content are merged (no duplicate)
+- ❌ Fields with same ID but different content throw `DuplicateFieldError`
+- Dependencies, functions, and metadata are combined from all forms
+
 ### Field Creation
 
 All field creation functions follow the pattern:
@@ -511,6 +542,69 @@ form = addField(form, createFileField('resume', 'Resume', {
 }));
 
 const json = toJSON(form);
+```
+
+### Merging Multiple Forms
+
+```typescript
+import {
+  createForm,
+  addField,
+  mergeForms,
+  createTextField,
+  createEmailField,
+  createNumberField,
+} from '@wearehere-labs/generic-form-create';
+
+// Create a reusable personal info form
+let personalInfoForm = createForm('personal-info');
+personalInfoForm = addField(
+  personalInfoForm,
+  createTextField('firstName', 'First Name', { minLength: 1 })
+);
+personalInfoForm = addField(
+  personalInfoForm,
+  createTextField('lastName', 'Last Name', { minLength: 1 })
+);
+personalInfoForm = addField(
+  personalInfoForm,
+  createEmailField('email', 'Email', { required: true })
+);
+
+// Create an address form
+let addressForm = createForm('address');
+addressForm = addField(
+  addressForm,
+  createTextField('street', 'Street Address', { minLength: 1 })
+);
+addressForm = addField(
+  addressForm,
+  createTextField('city', 'City', { minLength: 1 })
+);
+addressForm = addField(
+  addressForm,
+  createTextField('zipCode', 'ZIP Code', { pattern: '^\\d{5}$' })
+);
+
+// Create a preferences form
+let preferencesForm = createForm('preferences');
+preferencesForm = addField(
+  preferencesForm,
+  createNumberField('notifications', 'Email Notifications', {})
+);
+
+// Merge all three forms into one
+const completeForm = mergeForms(
+  [personalInfoForm, addressForm, preferencesForm],
+  {
+    formId: 'complete-profile',
+    title: 'Complete Profile Form',
+    description: 'Fill out your complete profile information',
+  }
+);
+
+// Result: single form with all 7 fields
+console.log(completeForm.fields.length); // 7
 ```
 
 ## Error Handling

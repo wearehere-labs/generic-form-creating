@@ -19,6 +19,7 @@ export {
   removeDependency,
   addFunction,
   removeFunction,
+  mergeForms,
   toJSON,
   fromJSON,
 } from './form';

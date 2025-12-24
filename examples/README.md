@@ -45,7 +45,16 @@ A comprehensive job application form demonstrating:
 - Dependencies between fields
 
 **Output**: Creates a job application form with conditional fields.
+### [merge-forms.ts](./merge-forms.ts)
 
+Demonstrates merging multiple form definitions into one:
+- Basic merge of two forms
+- Merging with shared/identical fields
+- Building modular forms from reusable components
+- Handling merge conflicts (duplicate fields with different content)
+- Merging multiple forms at once
+
+**Output**: Shows various merge scenarios and the resulting combined forms.
 ## Creating Your Own Examples
 
 To create a new example:

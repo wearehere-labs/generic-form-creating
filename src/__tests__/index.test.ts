@@ -4,6 +4,7 @@ import {
   removeField,
   getField,
   updateField,
+  mergeForms,
   createTextField,
   createNumberField,
   createSelectField,
@@ -212,5 +213,150 @@ describe('JSON Conversion', () => {
 
     expect(parsed.formId).toBe('test-form');
     expect(parsed.title).toBe('Test');
+  });
+});
+
+describe('Form Merging', () => {
+  test('mergeForms merges two forms with different fields', () => {
+    let form1 = createForm('form1');
+    form1 = addField(form1, createTextField('field1', 'Field 1', {}));
+    form1 = addField(form1, createTextField('field2', 'Field 2', {}));
+
+    let form2 = createForm('form2');
+    form2 = addField(form2, createTextField('field3', 'Field 3', {}));
+    form2 = addField(form2, createTextField('field4', 'Field 4', {}));
+
+    const merged = mergeForms([form1, form2]);
+
+    expect(merged.fields).toHaveLength(4);
+    expect(merged.fields.map(f => f.id)).toEqual(['field1', 'field2', 'field3', 'field4']);
+  });
+
+  test('mergeForms allows identical duplicate fields', () => {
+    let form1 = createForm('form1');
+    const sharedField = createTextField('shared', 'Shared Field', { minLength: 3 });
+    form1 = addField(form1, sharedField);
+    form1 = addField(form1, createTextField('field1', 'Field 1', {}));
+
+    let form2 = createForm('form2');
+    form2 = addField(form2, sharedField); // Same field
+    form2 = addField(form2, createTextField('field2', 'Field 2', {}));
+
+    const merged = mergeForms([form1, form2]);
+
+    expect(merged.fields).toHaveLength(3); // shared, field1, field2 (no duplicate)
+    expect(merged.fields.map(f => f.id)).toEqual(['shared', 'field1', 'field2']);
+  });
+
+  test('mergeForms throws error for same ID with different content', () => {
+    let form1 = createForm('form1');
+    form1 = addField(form1, createTextField('username', 'Username', { minLength: 3 }));
+
+    let form2 = createForm('form2');
+    form2 = addField(form2, createTextField('username', 'Username', { minLength: 5 }));
+
+    expect(() => mergeForms([form1, form2])).toThrow(DuplicateFieldError);
+  });
+
+  test('mergeForms returns single form when only one provided', () => {
+    let form = createForm('form1');
+    form = addField(form, createTextField('field1', 'Field 1', {}));
+
+    const merged = mergeForms([form]);
+
+    expect(merged).toEqual(form);
+  });
+
+  test('mergeForms throws error when no forms provided', () => {
+    expect(() => mergeForms([])).toThrow(FormCreationError);
+  });
+
+  test('mergeForms merges three or more forms', () => {
+    let form1 = createForm('form1');
+    form1 = addField(form1, createTextField('field1', 'Field 1', {}));
+
+    let form2 = createForm('form2');
+    form2 = addField(form2, createTextField('field2', 'Field 2', {}));
+
+    let form3 = createForm('form3');
+    form3 = addField(form3, createTextField('field3', 'Field 3', {}));
+
+    const merged = mergeForms([form1, form2, form3]);
+
+    expect(merged.fields).toHaveLength(3);
+  });
+
+  test('mergeForms uses custom options', () => {
+    let form1 = createForm('form1', { title: 'Form 1' });
+    form1 = addField(form1, createTextField('field1', 'Field 1', {}));
+
+    let form2 = createForm('form2', { title: 'Form 2' });
+    form2 = addField(form2, createTextField('field2', 'Field 2', {}));
+
+    const merged = mergeForms([form1, form2], {
+      formId: 'merged-form',
+      title: 'Merged Form',
+      description: 'A merged form',
+    });
+
+    expect(merged.formId).toBe('merged-form');
+    expect(merged.title).toBe('Merged Form');
+    expect(merged.description).toBe('A merged form');
+  });
+
+  test('mergeForms combines dependencies', () => {
+    let form1 = createForm('form1');
+    form1 = addField(form1, createTextField('field1', 'Field 1', {}));
+    form1 = {
+      ...form1,
+      dependencies: [
+        {
+          id: 'dep1',
+          sourceFieldId: 'field1',
+          condition: { operator: 'equals', value: 'test' },
+          effects: [],
+        },
+      ],
+    };
+
+    let form2 = createForm('form2');
+    form2 = addField(form2, createTextField('field2', 'Field 2', {}));
+    form2 = {
+      ...form2,
+      dependencies: [
+        {
+          id: 'dep2',
+          sourceFieldId: 'field2',
+          condition: { operator: 'equals', value: 'test' },
+          effects: [],
+        },
+      ],
+    };
+
+    const merged = mergeForms([form1, form2]);
+
+    expect(merged.dependencies).toHaveLength(2);
+  });
+
+  test('mergeForms combines functions', () => {
+    let form1 = createForm('form1');
+    form1 = {
+      ...form1,
+      functions: {
+        func1: { type: 'datasource', description: 'Function 1' },
+      },
+    };
+
+    let form2 = createForm('form2');
+    form2 = {
+      ...form2,
+      functions: {
+        func2: { type: 'validator', description: 'Function 2' },
+      },
+    };
+
+    const merged = mergeForms([form1, form2]);
+
+    expect(Object.keys(merged.functions || {})).toEqual(['func1', 'func2']);
   });
 });

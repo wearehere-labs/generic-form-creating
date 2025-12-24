@@ -219,6 +219,107 @@ export function removeFunction(form: FormDefinition, name: string): FormDefiniti
 }
 
 /**
+ * Merges multiple form definitions into one
+ * @param forms - Array of form definitions to merge
+ * @param options - Optional merge options
+ * @returns A new merged form definition
+ * @throws DuplicateFieldError if fields with same ID have different content
+ * @throws FormCreationError if no forms provided or forms array is empty
+ */
+export function mergeForms(
+  forms: FormDefinition[],
+  options?: {
+    formId?: string;
+    title?: string;
+    description?: string;
+    version?: string;
+  }
+): FormDefinition {
+  if (!forms || forms.length === 0) {
+    throw new FormCreationError('At least one form must be provided for merging');
+  }
+
+  if (forms.length === 1) {
+    return forms[0];
+  }
+
+  // Start with base form structure
+  const mergedForm: FormDefinition = {
+    version: options?.version || forms[0].version,
+    formId: options?.formId || forms[0].formId,
+    title: options?.title || forms[0].title,
+    description: options?.description || forms[0].description,
+    fields: [],
+    dependencies: [],
+    functions: {},
+    metadata: {},
+  };
+
+  // Track fields by ID for duplicate detection
+  const fieldMap = new Map<string, Field>();
+
+  // Merge fields from all forms
+  for (const form of forms) {
+    for (const field of form.fields) {
+      const existingField = fieldMap.get(field.id);
+
+      if (existingField) {
+        // Check if fields are identical
+        if (!deepEqual(existingField, field)) {
+          throw new DuplicateFieldError(
+            field.id,
+            'Cannot merge forms: fields with same ID have different content'
+          );
+        }
+        // If identical, skip (don't add duplicate)
+      } else {
+        // New field, add it
+        fieldMap.set(field.id, field);
+        mergedForm.fields.push(field);
+      }
+    }
+  }
+
+  // Merge dependencies (no duplicate check, just combine)
+  const dependencyIds = new Set<string>();
+  for (const form of forms) {
+    if (form.dependencies) {
+      for (const dep of form.dependencies) {
+        // Only add if it has an ID and we haven't seen it, or if it has no ID
+        if (!dep.id || !dependencyIds.has(dep.id)) {
+          if (dep.id) {
+            dependencyIds.add(dep.id);
+          }
+          mergedForm.dependencies!.push(dep);
+        }
+      }
+    }
+  }
+
+  // Merge functions (later definitions override earlier ones)
+  for (const form of forms) {
+    if (form.functions) {
+      mergedForm.functions = {
+        ...mergedForm.functions,
+        ...form.functions,
+      };
+    }
+  }
+
+  // Merge metadata (later definitions override earlier ones)
+  for (const form of forms) {
+    if (form.metadata) {
+      mergedForm.metadata = {
+        ...mergedForm.metadata,
+        ...form.metadata,
+      };
+    }
+  }
+
+  return mergedForm;
+}
+
+/**
  * Converts a form definition to JSON string
  * @param form - The form definition to convert
  * @param pretty - Whether to pretty-print the JSON (default: true)

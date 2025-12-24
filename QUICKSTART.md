@@ -132,7 +132,41 @@ form = addDependency(
 );
 ```
 
-### 5. Working with the Result
+### 5. Merging Forms
+
+```typescript
+import {
+  createForm,
+  addField,
+  mergeForms,
+  createTextField,
+  createEmailField,
+} from '@wearehere-labs/generic-form-create';
+
+// Create reusable form sections
+let contactInfo = createForm('contact');
+contactInfo = addField(contactInfo, createTextField('name', 'Name', {}));
+contactInfo = addField(contactInfo, createEmailField('email', 'Email', { required: true }));
+
+let addressInfo = createForm('address');
+addressInfo = addField(addressInfo, createTextField('street', 'Street', {}));
+addressInfo = addField(addressInfo, createTextField('city', 'City', {}));
+
+// Merge them into one form
+const completeForm = mergeForms([contactInfo, addressInfo], {
+  formId: 'complete-form',
+  title: 'Contact & Address',
+});
+
+console.log(completeForm.fields.length); // 4 fields total
+```
+
+**Merge Rules:**
+- ✅ Different field IDs: merged successfully
+- ✅ Same ID, identical content: merged (no duplicate)
+- ❌ Same ID, different content: throws `DuplicateFieldError`
+
+### 6. Working with the Result
 
 ```typescript
 import { toJSON, fromJSON } from '@wearehere-labs/generic-form-create';

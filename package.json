@@ -1,0 +1,40 @@
+{
+  "name": "@wearehere-labs/generic-form-create",
+  "version": "1.0.0",
+  "description": "Library for dynamically creating Generic Form Format (GFF) JSONs",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "generic-form-format",
+    "gff",
+    "form",
+    "json",
+    "form-builder"
+  ],
+  "author": "WeAreHere Labs",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/wearehere-labs/generic-form-create.git"
+  },
+  "dependencies": {
+    "generic-form-format": "github:wearehere-labs/generic-form-format"
+  },
+  "devDependencies": {
+    "@types/jest": "^29.5.11",
+    "@types/node": "^20.10.6",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.1.1",
+    "typescript": "^5.3.3"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ]
+}
